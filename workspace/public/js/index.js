@@ -2,10 +2,10 @@
 
 $(document).ready(function() {  
   
-  var console = {};
-  console.log = function(text) {
-    alert(text);
-  };
+  // var console = {};
+  // console.log = function(text) {
+  //   alert(text);
+  // };
 
   // jQuery variables attached to DOM elements
   var $error = $('.error'),
@@ -56,20 +56,27 @@ $(document).ready(function() {
     'default': {
         'search_selfridges': {sample : 'search for corner sofas', func: function(action) {
           var search_term;
-          if(action.answers.entities.sofa_search[0].value) {
-            search_term = action.answers.entities.sofa_search[0].value;
+          if(action.answers.entities.search_entity[0].value) {
+            search_term = action.answers.entities.search_entity[0].value;
           } else {
             search_term = action.speech;
           }
-          var search = 'http://www.selfridges.com/webapp/wcs/stores/servlet/FhBrowse?ajax=true&catalogId=16151&msg=&ppp=12&srch=Y&storeId=10052&freeText=blue%20dress'+encodeURIComponent(search_term) + '&pn=1';
+          var search = 'http://www.selfridges.com/webapp/wcs/stores/servlet/FhBrowse?ajax=true&catalogId=16151&msg=&ppp=6&srch=Y&storeId=10052&freeText='+encodeURIComponent(search_term) + '&pn=1';
           action.context = 'search_results';
           changePage(search,action);
         }},
         'previous': {sample : 'go back', func:function(action){
-          if(history.length > 1)
+          if(history.length > 1){
             history.pop();
+          }
           var previous_action = history[history.length -1];
+          action.context = previous_action.context;
           refreshObject(previous_action.target,action);
+        }},
+        'inspiration': {sample : 'inspire me', func:function(action){
+          var target = 'https://www.youtube.com/watch?v=92mFJkee1mE&list=UUvXRE9A1im1wsmfjYzds_9Q';
+          action.context = 'inspiration';
+          changePage(target,action);
         }}
     },
     'search_results': {
@@ -102,7 +109,6 @@ $(document).ready(function() {
     },
     'product_viewer': {
         'next': function() { /* ... */ },
-        'previous': function() { /* ... */ },
         'info': function() { /* ... */ }
     }
   };
@@ -143,28 +149,47 @@ $(document).ready(function() {
     history.push(action);
   }
   
+  /**
+   * This is a short term fix to get the pages back into the site.
+   * In a proper implementation we would use REST services or equivalent
+   **/
   function refreshObject(target, action){
-    if(action.context === 'search_results'){
+    //if(action.context === 'search_results'){
+    if(true){
+      // use jsonp to avoid cross domain origin issues
       $.ajax({
           url: "http://jsonp.wemakelive.com",
           jsonp: "callback",
           dataType: "jsonp",
+          // async: false,
           data: {
               url: target
           },
           // Work with the response
           success: function( response ) {
-             $loading.hide();
-             $results.show();
-             $('#output').html( response.contents ); // server response
+            $loading.hide();
+            $results.show();
+            
+            // if there is a 301 redirect to a landing page
+            // then we only want to deal with the actual html rather than the redirect as well
+            var abc = response.contents;
+            var $html = $(abc.substring(abc.indexOf("<!DOCTYPE html>")));
+            console.log("done html");
+            $('#output').html($html.find('#masterContent').html());
+            $('.productContainer img').each(function(){
+              $(this).attr('src', $(this).attr('data-mainsrc'));
+            });
+            $('.productContainer img').css('visibility', 'visible');
+            $('#paginationFooter').hide();
           }
-      });
+        });
     } else  {
-      //console.log(target);
+      // if it's not a search we just load the contents directly into the object.
       document.getElementById("output").innerHTML='<object height="800" width="1100" class="output" id="object" type="text/html" data="' + target + '" ></object>';
       $loading.hide();
       $results.show();
     }
+    console.log("adding target" + target);
     action.target = target;
     logAction(action);
   }
@@ -208,8 +233,8 @@ $(document).ready(function() {
 
   function on_text (args) {
     var json = JSON.parse(args[0]);
+    console.log(json);
     if(json && json.outcomes){
-      //console.log(json.outcomes[0]);
       var outcomes = json.outcomes[0],
           confidence = outcomes.confidence;
       if(confidence > 0.3){        

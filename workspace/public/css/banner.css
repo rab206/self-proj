@@ -11,14 +11,15 @@
 }
 
 .top-nav {
-  background-color: #323232;
+  background-color: rgb(254, 216, 21);
   padding-top: 15px;
 }
 .top-nav .heading {
   margin: 0px;
-  color: #FDFDFD;
-  font-weight: 200;
+  font-family: arial, sans-serif;
   font-size: 19px;
+  font-weight: bold;
+  color:black;
 }
 .top-nav .heading span {
   font-weight: 500;

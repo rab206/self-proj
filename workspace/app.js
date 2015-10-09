@@ -62,13 +62,21 @@ var db = {};
 app.get('/nfc/:id', function(req,res,next){
   // req.params.id
   var audit_trail = db[req.params.id];
-  res.redirect(audit_trail[audit_trail.length -1].target);
+  var target = audit_trail[audit_trail.length -1].target;
+  if(target){
+    target = target.replace("ajax=true&",'');
+  } else {
+    target = 'http://www.selfridges.com/';
+  }
+  res.redirect(target);
 });
 
 app.post('/log', function(req,res,next){
   //{guid: guid(), trail: audit_trail}
   console.log(req.body);
+  db[req.body.guid] = [];
   db[req.body.guid] = req.body.trail;
+  res.end('{"success" : "Updated Successfully", "status" : 200}');
 });
 
 // catch 404 and forward to error handler
