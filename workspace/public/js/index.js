@@ -74,7 +74,7 @@ $(document).ready(function() {
           refreshObject(previous_action.target,action);
         }},
         'inspiration': {sample : 'inspire me', func:function(action){
-          var target = 'https://www.youtube.com/watch?v=92mFJkee1mE&list=UUvXRE9A1im1wsmfjYzds_9Q';
+          var target = 'http://www.youtube.com/embed/92mFJkee1mE?list=UUvXRE9A1im1wsmfjYzds_9Q&autoplay=1';
           action.context = 'inspiration';
           changePage(target,action);
         }}
@@ -154,8 +154,7 @@ $(document).ready(function() {
    * In a proper implementation we would use REST services or equivalent
    **/
   function refreshObject(target, action){
-    //if(action.context === 'search_results'){
-    if(true){
+    if(action.context != 'inspiration'){
       // use jsonp to avoid cross domain origin issues
       $.ajax({
           url: "http://jsonp.wemakelive.com",
@@ -169,11 +168,10 @@ $(document).ready(function() {
           success: function( response ) {
             $loading.hide();
             $results.show();
-            
             // if there is a 301 redirect to a landing page
             // then we only want to deal with the actual html rather than the redirect as well
-            var abc = response.contents;
-            var $html = $(abc.substring(abc.indexOf("<!DOCTYPE html>")));
+            var responseHtml = response.contents;
+            var $html = $(responseHtml.substring(responseHtml.indexOf("<!DOCTYPE html>")));
             console.log("done html");
             $('#output').html($html.find('#masterContent').html());
             $('.productContainer img').each(function(){
