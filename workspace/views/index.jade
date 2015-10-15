@@ -2,7 +2,7 @@
 extends ./layout.jade
 
 block row-content
-  #output.container.results(style='display:none')
+  #output.container.results(style="display:none")
   div.container
     div.row
       div.col-lg-12
@@ -20,7 +20,11 @@ block row-content
         div.error(style='display:none;')
           h2 Error
           div.well
-            div.errorMsg
-      
+            div.errorMs
+            
+  script(type='text/javascript', src='//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js')
+  script(type='text/javascript', src='//autobahn.s3.amazonaws.com/autobahnjs/latest/autobahn.min.jgz')
+  script(type='text/javascript', src='/js/index.js')
+
   
   

@@ -6,11 +6,12 @@ html(lang='en')
       title Selfridges Projector App POC
     meta(charset='utf-8')
     meta(http-equiv='X-UA-Compatible', content='IE=edge')
-    meta(name='viewport', content='width=device-width, initial-scale=1')
+    meta(name='viewport', content='width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no')
 
     link(rel='shortcut icon', href='/images/favicon.ico', type='image/x-icon')
     link(rel='icon', href='/images/favicon.ico', type='image/x-icon')
     
+    link(rel="stylesheet", href="/css/microphone.min.css")
     link(rel='stylesheet', href='/css/watson-bootstrap-dark.css')
     link(rel='stylesheet', href='//www.selfridges.com/wcsstore1.00.00.2366.02/ConsumerDirectStorefrontAssetStore//SiteRedesign/static/css/en_US/pages/plp/plp.css')
     link(rel='stylesheet', href='//www.selfridges.com/wcsstore1.00.00.2366.02/ConsumerDirectStorefrontAssetStore//SiteRedesign/static/css/en_US/global/global.css')
@@ -19,12 +20,10 @@ html(lang='en')
     link(rel='stylesheet', href='/css/banner.css')
     link(rel='stylesheet', href='/css/style.css')
     
+    
 
   body
-    include banner.jade
-  
-    block row-content
-
-    script(type='text/javascript', src='//ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js')
-    script(type='text/javascript', src='/js/index.js')
-    script(type='text/javascript', src='//autobahn.s3.amazonaws.com/autobahnjs/latest/autobahn.min.jgz')
+    div(style="overflow-x:hidden")
+      include banner.jade
+    
+      block row-content

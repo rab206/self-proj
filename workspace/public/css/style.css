@@ -19,3 +19,33 @@
 .classification {
 	color: #d74108;
 }
+
+.bottom-buffer {
+    margin-bottom:20px;
+}
+
+.top-buffer {
+    margin-top:20px;
+}
+
+.highlight {
+    background-color: #f7f7f9;
+    border: 1px solid #e1e1e8;
+    border-radius: 4px;
+    margin-bottom: 14px;
+    padding: 9px 14px;
+}
+
+.mic {
+    height: 150px;
+    width: 150px;
+}
+
+.wit-microphone.ready .mic{
+    color:#009900;
+    border-color:#009900;
+}
+
+
+
+

@@ -18,47 +18,39 @@
 
 var express    = require('express'),
   app          = express(),
-  bluemix      = require('./config/bluemix'),
-  extend       = require('util')._extend,
-  watson       = require('watson-developer-cloud');
+  multer       = require('multer');
+    
+var storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './public/uploads/');
+  },
+  filename: function (req, file, cb) {
+    var originalfileName = file.originalname,
+        dotIndex = originalfileName.indexOf('.'),
+        suffix = originalfileName.substring(dotIndex),
+        name = originalfileName.substring(0,dotIndex);
+    cb(null, name + '-' + Date.now() + suffix);
+  }
+});
 
+var upload = multer({storage: storage});
+  
 // Bootstrap application settings
 require('./config/express')(app);
-
-// if bluemix credentials exists, then override local
-var credentials = extend({
-  version: 'v1',
-  url: "https://gateway.watsonplatform.net/natural-language-classifier/api",
-  username: "9e0ba511-b4ae-4f7a-baa8-0dceed36cedf",
-  password: "PxDpcK0SVMv1"
-}, bluemix.getServiceCreds('natural_language_classifier')); // VCAP_SERVICES
-
-// Create the service wrapper
-var nlClassifier = watson.natural_language_classifier(credentials);
 
 // render index page
 app.get('/', function(req, res) {
   res.render('index');
 });
 
-// Call the pre-trained classifier with body.text
-// Responses are json
-app.post('/', function(req, res, next) {
-  var params = {
-    classifier: process.env.CLASSIFIER_ID || 'D39290-nlc-865', // pre-trained classifier
-    text: req.body.text
-  };
-
-  nlClassifier.classify(params, function(err, results) {
-    if (err)
-      return next(err);
-    else
-      res.json(results);
-  });
+// render interaction page
+app.get('/interact', function(req, res) {
+  res.render('userinput');
 });
 
 var db = {};
 
+// redirect nfc user to latest page from that device
 app.get('/nfc/:id', function(req,res,next){
   // req.params.id
   var audit_trail = db[req.params.id];
@@ -71,12 +63,18 @@ app.get('/nfc/:id', function(req,res,next){
   res.redirect(target);
 });
 
+// log the updates to the database
 app.post('/log', function(req,res,next){
   //{guid: guid(), trail: audit_trail}
   console.log(req.body);
   db[req.body.guid] = [];
   db[req.body.guid] = req.body.trail;
   res.end('{"success" : "Updated Successfully", "status" : 200}');
+});
+
+// receive images from customers
+app.post('/uploadimage', upload.single('imgFile'), function(req,res){
+    res.end(req.file.filename);
 });
 
 // catch 404 and forward to error handler

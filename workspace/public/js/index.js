@@ -17,12 +17,10 @@ $(document).ready(function() {
     $connecting = $('.connecting');
     
   var processWitResponse = function(answers) {
-
     $loading.show();
     $error.hide();
     $results.hide();
     
-    console.log(answers.intent);
     performAction(answers);
     $('html, body').animate({ scrollTop: 0 }, 'fast');
     
@@ -48,22 +46,26 @@ $(document).ready(function() {
   }
   
   function logAction(action){
+    var date = new Date();
+    action.timestamp = date;
     audit_trail.push(action);
     $.post('log', {guid: getDeviceId(), trail: audit_trail});
   }
   
   var page_actions = {
     'default': {
-        'search_selfridges': {sample : 'search for corner sofas', func: function(action) {
+        'search_selfridges': {sample : 'search for gucci handbags', func: function(action) {
           var search_term;
-          if(action.answers.entities.search_entity[0].value) {
+          if(action.answers.entities.search_entity[0] && action.answers.entities.search_entity[0].value) {
             search_term = action.answers.entities.search_entity[0].value;
+          } else if(action.answers.entities.search_entity.value){
+            search_term = action.answers.entities.search_entity.value;
           } else {
             search_term = action.speech;
           }
           var search = 'http://www.selfridges.com/webapp/wcs/stores/servlet/FhBrowse?ajax=true&catalogId=16151&msg=&ppp=6&srch=Y&storeId=10052&freeText='+encodeURIComponent(search_term) + '&pn=1';
           action.context = 'search_results';
-          changePage(search,action);
+          changePage(search, action);
         }},
         'previous': {sample : 'go back', func:function(action){
           if(history.length > 1){
@@ -81,7 +83,6 @@ $(document).ready(function() {
     },
     'search_results': {
         'more_results': {sample : 'show more results', func:function(action) {
-          //console.log(history[history.length -1]['target']);
           var search = history[history.length -1]['target'],
               page_num = Number(search.substring(search.length - 1,search.length)) + 1,
               target = search.substring(0, search.length - 1) + page_num;
@@ -91,9 +92,17 @@ $(document).ready(function() {
         'select': {sample : 'open the first product', func:function(action){
           var num;
           if(action.answers.entities.number){
-            num = action.answers.entities.number[0].value;
+            if(action.answers.entities.number.value){
+              num = action.answers.entities.number.value
+            } else {
+              num = action.answers.entities.number[0].value;
+            }
           } else if(action.answers.entities.ordinal) {
-            num = action.answers.entities.ordinal[0].value;
+            if(action.answers.entities.ordinal) {
+              num = action.answers.entities.ordinal.value;
+            } else {
+              num = action.answers.entities.ordinal[0].value;
+            }
           } else {
             num = nthToNum(action.speech.match(new RegExp(Object.keys(nth).join('|'),'g'))[0]);
           }
@@ -145,6 +154,7 @@ $(document).ready(function() {
   }
   
   function changePage(target, action){
+    console.log("loading: " + target);
     refreshObject(target, action);
     history.push(action);
   }
@@ -154,7 +164,17 @@ $(document).ready(function() {
    * In a proper implementation we would use REST services or equivalent
    **/
   function refreshObject(target, action){
-    if(action.context != 'inspiration'){
+    // inspiration is a youtube video so no doctype, upload is just an image from the server
+    if(action.context === 'inspiration'){
+      // if it's not a search we just load the contents directly into the object.
+      document.getElementById("output").innerHTML='<object height="800" width="1100" class="output" id="object" type="text/html" data="' + target + '" ></object>';
+      $loading.hide();
+      $results.show();
+    } else if(action.context === 'upload'){
+      document.getElementById("output").innerHTML='<img width="1100" class="uploadedImage" id="uploadedImage" src="' + target + '" />';
+      $loading.hide();
+      $results.show();
+    } else {
       // use jsonp to avoid cross domain origin issues
       $.ajax({
           url: "http://jsonp.wemakelive.com",
@@ -172,7 +192,6 @@ $(document).ready(function() {
             // then we only want to deal with the actual html rather than the redirect as well
             var responseHtml = response.contents;
             var $html = $(responseHtml.substring(responseHtml.indexOf("<!DOCTYPE html>")));
-            console.log("done html");
             $('#output').html($html.find('#masterContent').html());
             $('.productContainer img').each(function(){
               $(this).attr('src', $(this).attr('data-mainsrc'));
@@ -181,13 +200,7 @@ $(document).ready(function() {
             $('#paginationFooter').hide();
           }
         });
-    } else  {
-      // if it's not a search we just load the contents directly into the object.
-      document.getElementById("output").innerHTML='<object height="800" width="1100" class="output" id="object" type="text/html" data="' + target + '" ></object>';
-      $loading.hide();
-      $results.show();
     }
-    console.log("adding target" + target);
     action.target = target;
     logAction(action);
   }
@@ -230,11 +243,17 @@ $(document).ready(function() {
   ];
 
   function on_text (args) {
-    var json = JSON.parse(args[0]);
-    console.log(json);
-    if(json && json.outcomes){
-      var outcomes = json.outcomes[0],
-          confidence = outcomes.confidence;
+    var outcomes;
+    if(args[0].outcome){
+      var json = args[0];
+      outcomes = json.outcome;
+      outcomes._text = json.msg_body;
+    } else {
+      json = JSON.parse(args[0]);
+      outcomes = json.outcomes[0];
+    }
+    if(outcomes){
+      var confidence = outcomes.confidence;
       if(confidence > 0.3){        
         processWitResponse(outcomes); 
       } else {
@@ -244,12 +263,26 @@ $(document).ready(function() {
       witError();
     }
   }
+  
+  function on_image (args) {
+    var imageName = args[0];
+    if(imageName){
+      var action = {
+        top_action: 'upload',
+        speech: 'upload image',
+        context: 'upload',
+        previous_context: history[history.length-1]['context']
+      };
+      refreshObject('/uploads/' + imageName, action);
+    }
+  }
+  
 
 
   loadQuestions(defaultQuestions);
 
 
-  var wsuri = "ws://127.0.0.1:8080/ws";  
+  var wsuri = "ws://crossbar-rab206.c9.io/ws";  
   // the WAMP connection to the Router
   //
   var connection = new autobahn.Connection({
@@ -263,8 +296,18 @@ $(document).ready(function() {
     $connecting.hide();
     
     
-    // SUBSCRIBE to a topic and receive events
+    // SUBSCRIBE to speech events
     session.subscribe('com.selfridges.speech', on_text).then(
+      function (sub) {
+        console.log('subscribed to topic');
+      },
+      function (err) {
+        console.log('failed to subscribe to topic', err);
+      }
+    );
+    
+    // SUBSCRIBE to image upload events
+    session.subscribe('com.selfridges.uploadimage', on_image).then(
       function (sub) {
         console.log('subscribed to topic');
       },
