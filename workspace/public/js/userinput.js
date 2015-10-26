@@ -60,6 +60,10 @@ $(document).ready(function() {
     uploadImage(file);
   });
   
+  $('#fetchPage').on("click",function(){
+     window.open('/nfc/1','_blank');
+  });
+  
   // $('.ask-btn').click(function() {
   //   askQuestion($question.val());
   //   $question.focus();

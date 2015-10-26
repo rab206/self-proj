@@ -13,13 +13,16 @@ block row-content
             div.row
               div.col-lg-4.col-xs-4
                 p.help-block Click on the microphone icon to start talking
-                // or use the input box to type text directly
               div.col-lg-3.col-lg-offset-2.col-xs-6
                 div#microphone.mic
             div.row
-              div#result
-              div#info
-              div#error
+              div.col-lg-12.col-xs-12
+                div#result
+                div#info
+                div#error
+            div.row
+              div.col-lg-12.col-xs-12
+                label.btn.btn-primary#fetchPage Get me the page
           // div.row
           //   div.col-lg-10.col-xs-10.col-xs-8
           //     input.form-control.questionText#textInput(type="text", required="true", placeholder="Input a command to send to the scren")
@@ -49,7 +52,7 @@ block row-content
       div.row
         div.col-lg-12.col-xs-12
           div.connecting
-            h3 Connecting to Microphone
+            h3 Connecting to Screen
             div.text-center
               img(src='http://www.dfs.co.uk/wcsstore/DFSStorefrontAssetStore/images/dfs/icons/icon_loading.gif')
           div.loading(style='display:none;')

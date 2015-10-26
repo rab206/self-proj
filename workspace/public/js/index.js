@@ -13,7 +13,8 @@ $(document).ready(function() {
     $loading = $('.loading'),
     $results = $('.results'),
     //$output = $('.output'),
-    //$question = $('.questionText'),
+    $defaultExamples = $('#defaultExamples'), 
+    $examples = $('#examples'),
     $connecting = $('.connecting');
     
   var processWitResponse = function(answers) {
@@ -23,7 +24,6 @@ $(document).ready(function() {
     
     performAction(answers);
     $('html, body').animate({ scrollTop: 0 }, 'fast');
-    
   };
   
   var witError = function(error){
@@ -54,7 +54,7 @@ $(document).ready(function() {
   
   var page_actions = {
     'default': {
-        'search_selfridges': {sample : 'search for gucci handbags', func: function(action) {
+        'search_selfridges': {sample : 'search for tom ford jackets', func: function(action) {
           var search_term;
           if(action.answers.entities.search_entity[0] && action.answers.entities.search_entity[0].value) {
             search_term = action.answers.entities.search_entity[0].value;
@@ -63,7 +63,7 @@ $(document).ready(function() {
           } else {
             search_term = action.speech;
           }
-          var search = 'http://www.selfridges.com/webapp/wcs/stores/servlet/FhBrowse?ajax=true&catalogId=16151&msg=&ppp=6&srch=Y&storeId=10052&freeText='+encodeURIComponent(search_term) + '&pn=1';
+          var search = 'http://www.selfridges.com/webapp/wcs/stores/servlet/FhBrowse?ajax=true&catalogId=16151&msg=&ppp=8&srch=Y&storeId=10052&freeText='+encodeURIComponent(search_term) + '&pn=1';
           action.context = 'search_results';
           changePage(search, action);
         }},
@@ -72,6 +72,7 @@ $(document).ready(function() {
             history.pop();
           }
           var previous_action = history[history.length -1];
+          console.log(previous_action);
           action.context = previous_action.context;
           refreshObject(previous_action.target,action);
         }},
@@ -89,16 +90,17 @@ $(document).ready(function() {
           action.context = 'search_results';
           changePage(target,action);
         }},
-        'select': {sample : 'open the first product', func:function(action){
+        'select': {sample : 'open the second product', func:function(action){
           var num;
+          console.log(action.answers.entities.ordinal[0].value);
           if(action.answers.entities.number){
             if(action.answers.entities.number.value){
-              num = action.answers.entities.number.value
+              num = action.answers.entities.number.value;
             } else {
               num = action.answers.entities.number[0].value;
             }
           } else if(action.answers.entities.ordinal) {
-            if(action.answers.entities.ordinal) {
+            if(action.answers.entities.ordinal.value) {
               num = action.answers.entities.ordinal.value;
             } else {
               num = action.answers.entities.ordinal[0].value;
@@ -106,6 +108,7 @@ $(document).ready(function() {
           } else {
             num = nthToNum(action.speech.match(new RegExp(Object.keys(nth).join('|'),'g'))[0]);
           }
+          console.log(num);
           var target = $('.productsInner div:nth-child(' + num + ') .title').attr('href');
           action.context = 'product_viewer';
           changePage(target, action);
@@ -138,18 +141,7 @@ $(document).ready(function() {
   }
   
   function defaultAction(action){
-    /* display usage tips based on current page and default options */
-    var questions = [];
     logAction(action);
-    for(var i in page_actions[action.previous_context]){
-      questions.push(page_actions[action.previous_context][i]['sample']);
-    }
-    if(action.previous_context != 'default'){
-      for(var j in page_actions['default']){
-        questions.push(page_actions['default'][j]['sample']);
-      }
-    }
-    loadQuestions(questions);
     console.log("default action");
   }
   
@@ -203,6 +195,7 @@ $(document).ready(function() {
     }
     action.target = target;
     logAction(action);
+    loadQuestions(action.context);
   }
   
   function performAction(answers) {
@@ -229,19 +222,28 @@ $(document).ready(function() {
     }
   }
 
-  var loadQuestions = function (questions){
+  var loadQuestions = function (context){
+     /* display usage tips based on current page and default options */
+    var questions = [];
+    if(context != 'default'){
+      for(var i in page_actions[context]){
+        questions.push(page_actions[context][i]['sample']);
+      }
+    }
+    $examples.text('');
     questions.forEach(function(question){
-      $('<a>').text(question).appendTo('.example-questions').append('&nbsp; &nbsp; &nbsp;');
+      $('<li>').text(question).appendTo($examples);
     });
   };
   
-  var defaultQuestions = [
-    'Im looking for a 3 seater sofa',
-    'Find black leather sofas',
-    'Tell me about finance options',
-    'Corner sofas'
-  ];
-
+  var questions = [];
+  for(var j in page_actions['default']){
+    questions.push(page_actions['default'][j]['sample']);
+  }
+  questions.forEach(function(question){
+    $('<li>').text(question).appendTo($defaultExamples);
+  });
+  
   function on_text (args) {
     var outcomes;
     if(args[0].outcome){
@@ -277,11 +279,6 @@ $(document).ready(function() {
     }
   }
   
-
-
-  loadQuestions(defaultQuestions);
-
-
   var wsuri = "ws://crossbar-rab206.c9.io/ws";  
   // the WAMP connection to the Router
   //
