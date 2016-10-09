@@ -1,1 +1,1 @@
-# Selfridges POC
+# Projector App POC
